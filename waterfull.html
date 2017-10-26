@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+	* {
+		margin: 0;
+		padding: 0;
+	}
+	ul,li {
+		list-style: none;
+	}
+	.wrap {
+		width: 900px;
+		position: relative;
+		margin: 0 auto;
+	}
+	.wrap .item {
+		margin: 10px;
+		position: absolute;
+		width: 280px;
+		padding: 0 0 10px 0;
+		border: 1px solid #ccc;
+	}
+	.item img {
+		width: 280px;
+	}
+	.item.hide {
+		display: none;
+	}
+</style>	
+<script type="text/javascript" src="http://code.jquery.com/jquery-3.2.1.js"></script>
+<script type="text/javascript">
+	$(function(){
+		var perPageCount = 10
+		var curPage = 1
+		var arr = []
+		var count = parseInt($('.wrap').width() / $('.item').outerWidth())
+		
+		for(var i=0;i<count;i++){
+			arr[i] = 0
+		}
+		show()
+
+		$(window).scroll(function(){
+			if(isScroll()){
+				show()
+			}
+		})
+
+		function show(){
+			getData(function(e){
+				$.each(e,function(idx,data){
+					var $node = getNode(data)
+					$node.find('img').on('load',function(){
+						$('ul').append($node)
+						waterfull($node)
+					})
+				})
+			})
+		}
+		//获取数据
+		function getData(callback){
+			$.ajax({
+				url: 'http://platform.sina.com.cn/slide/album_tech',
+				dataType: 'jsonp',
+				jsonp: 'jsoncallback',
+				data: {
+					app_key: '1271687855',
+					num: perPageCount,
+					page: curPage
+				}
+			}).done(function(ret){
+				if(ret && ret.status && ret.status.code ==='0'){
+					callback(ret.data)
+					curPage++
+				}else{
+					console.log('get error')
+				}
+			}).fail(function(){
+				console.log('系统异常')
+			})
+		}
+
+		//	把数据拼装成DOM节点	
+		function getNode(data){
+			var html = ''
+			html += '<li class="item">'
+			html += '<img src="'+data.img_url+'" alt="">'
+			html += '<h3>'+data.short_name+'</h3>'
+			html += '<p>'+data.short_intro+'</p>'
+			html += '</li>'
+			return $(html)
+		}
+
+
+
+		function waterfull($node){
+			var minValue = Math.min.apply(null,arr)
+			var index = arr.indexOf(minValue)
+			$node.css({
+				top: arr[index],
+				left: $node.outerWidth(true)*index
+			})
+			arr[index] += $node.outerHeight(true)
+			// $('.wrap').height(Math.max.apply(null,arr))
+		}
+
+		//判断用户是否滚动到底部
+		function isScroll(){
+			return $(window).scrollTop()+$(window).height() === $(document).height()
+		}
+	})
+</script>	
+</head>
+<body>
+	<div class="wrap">
+		<ul>
+			<!-- 用于计算li的宽度，但是不展示出来 -->
+			<li class="item hide"></li>
+		</ul>
+	</div>
+</body>
+</html>
